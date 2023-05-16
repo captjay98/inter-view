@@ -1,8 +1,5 @@
-import dotenv from 'dotenv';
-dotenv.config();
 import express from "express";
 import morgan from "morgan";
-import mongoose from "mongoose";
 import { dbConnect } from "./middleware/db.js"
 import uRouter from "./routes/userRoutes.js"
 import aRouter from "./routes/adminRoutes.js"
@@ -21,7 +18,6 @@ dbConnect()
   .then(() => {
     app.listen(3333, () => console.log('App running on Port 3333'));
   });
-
 
 
 app.use("/api/users", uRouter)

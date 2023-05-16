@@ -6,7 +6,8 @@ dotenv.config();
 
 export const dbConnect = async () => {
   try {
-    const dbURI = "mongodb+srv://noder:noder@nodetuts.xbadjti.mongodb.net/?retryWrites=true&w=majority";
+    // const dbURI = "mongodb+srv://noder:noder@nodeinterview.xbadjti.mongodb.net/?retryWrites=true&w=majority";
+    const dbURI = "mongodb+srv://noder:noder@cluster0.xbadjti.mongodb.net/nodeinterview?retryWrites=true&w=majority"
 
     await mongoose.connect(dbURI, {
       useNewUrlParser: true,

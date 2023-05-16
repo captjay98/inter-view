@@ -30,7 +30,7 @@ export const userSeekerSchema = Joi.object({
   lastname: Joi.string(),
   username: Joi.string(),
   email: Joi.string().email(),
-  phone: Joi.string(),
+  phone: Joi.number(),
   city: Joi.string(),
   state: Joi.string(),
   country: Joi.string(),
