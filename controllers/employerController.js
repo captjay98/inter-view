@@ -1,7 +1,6 @@
-import { geocoder } from "../middleware/geocoder.js"
-import { userEmployerSchema, filterFields } from "../middleware/validators.js"
-import models from "../models/employers.js";
-const { Employer, Job, JobApplication } = models;
+import { geocodeLocation } from "../middleware/geocoder.js"
+import { userEmployerSchema, createJobSchema, updateJobSchema, filterFields } from "../middleware/validators.js"
+import { Employer, Job, JobApplication } from "../models/employers.js";
 import User from "../models/users.js"
 
 
@@ -54,6 +53,44 @@ export const updateDashboard = async (req, res) => {
   }
 };
 
+
+
+
+
+export const createJob = async (req, res) => {
+  try {
+    const { employer } = await getUserAndEmployer(req);
+    const { error, value } = createJobSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+
+    const filteredFields = filterFields(value);
+    // const { title, description, industry, salary, required_skills, city } = filteredFields;
+
+    const locationCoordinates = await geocodeLocation(city);
+
+    const job = await Job.create({
+      employer: employer._id,
+      ...filteredFields,
+      city: filteredFields.city,
+      location: {
+        type: 'Point',
+        coordinates: locationCoordinates,
+      },
+    });
+
+    return res.status(200).json({ job });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+
+
 export const getJobs = async (req, res) => {
   try {
     const { employer } = await getUserAndEmployer(req);
@@ -67,45 +104,6 @@ export const getJobs = async (req, res) => {
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
-
-
-export const createJob = async (req, res) => {
-  try {
-    const { employer } = await getUserAndEmployer(req);
-    const { title, description, salary, required_skills, city } = req.body;
-
-    // Geocode the city to get the latitude and longitude
-    const result = await geocoder.geocode(city);
-
-    if (!result || !result[0]) {
-      return res.status(400).json({ message: "Invalid city" });
-    }
-
-    const latitude = result[0].latitude;
-    const longitude = result[0].longitude;
-
-    // Create the job
-    const job = new Job({
-      employer: employer._id,
-      title,
-      description,
-      salary,
-      required_skills,
-      city,
-      location: {
-        type: "Point",
-        coordinates: [longitude, latitude]
-      }
-    });
-
-    await job.save();
-    return res.status(200).json({ job });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};
-
 
 
 export const getJob = async (req, res) => {
@@ -125,14 +123,8 @@ export const getJob = async (req, res) => {
 export const updateJob = async (req, res) => {
   try {
     const { employer } = await getUserAndEmployer(req);
-    const job = await Job.findByIdAndUpdate(req.params.id, {
-      title: req.body.title,
-      description: req.body.description,
-      salary: req.body.salary,
-      required_skills: req.body.required_skills,
-      city: req.body.city,
-      location: req.body.location,
-    }, { new: true }).populate('required_skills', 'name');
+
+    const job = await Job.findById(req.params.id);
 
     if (!job) {
       return res.status(404).json({ message: 'Job not found' });
@@ -142,12 +134,28 @@ export const updateJob = async (req, res) => {
       return res.status(401).json({ message: 'You are not authorized to update this job' });
     }
 
+    const { error: validationError, value: validatedFields } = updateJobSchema.validate(req.body);
+    if (validationError) {
+      return res.status(400).json({ message: validationError.details[0].message });
+    }
+
+    const filteredFields = filterFields(validatedFields);
+
+    await Job.findByIdAndUpdate(
+      req.params.id,
+      filteredFields,
+      { new: true }
+    );
+
     return res.status(200).json({ job });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+
+
 
 
 export const getApplications = async (req, res) => {
@@ -165,6 +173,7 @@ export const getApplications = async (req, res) => {
   }
 };
 
+
 export const getApplication = async (req, res) => {
   try {
     const jobApplication = await JobApplication.findById(req.params.id).populate('job', 'title').populate('seeker', '-password');
@@ -177,6 +186,7 @@ export const getApplication = async (req, res) => {
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
 export const updateApplication = async (req, res) => {
   try {
