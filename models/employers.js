@@ -16,10 +16,17 @@ const JobSchema = new Schema({
     type: String,
     required: true
   },
+
   description: {
     type: String,
     required: true
   },
+
+  industry: {
+    type: String,
+    required: true
+  },
+
   salary: {
     type: Number,
     required: true
@@ -74,13 +81,13 @@ const JobApplicationSchema = new Schema({
 });
 
 EmployerSchema.index({ location: '2dsphere' });
-const Employer = mongoose.model("Employer", EmployerSchema);
-const Job = mongoose.model("Job", JobSchema)
-const JobApplication = mongoose.model("JobApplication", JobApplicationSchema)
+export const Employer = mongoose.model("Employer", EmployerSchema);
+export const Job = mongoose.model("Job", JobSchema)
+export const JobApplication = mongoose.model("JobApplication", JobApplicationSchema)
 
-export default {
-  Employer,
-  Job,
-  JobApplication,
-};
+// export default {
+//   Employer,
+//   Job,
+//   JobApplication,
+// };
 
