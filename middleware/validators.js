@@ -30,18 +30,38 @@ export const userSeekerSchema = Joi.object({
   lastname: Joi.string(),
   username: Joi.string(),
   email: Joi.string().email(),
-  phone: Joi.number(),
+  phone: Joi.object(),
   city: Joi.string(),
   state: Joi.string(),
   country: Joi.string(),
   dateOfBirth: Joi.date(),
   ethnicity: Joi.string(),
   skills: Joi.array().items(Joi.string()),
-  qualifications: Joi.array().items(Joi.string()),
-  experience: Joi.string(),
+  qualifications: Joi.array().items(Joi.object()),
+  experience: Joi.array(),
   cv: Joi.string(),
   passport: Joi.string(),
   visas: Joi.array().items(Joi.string()),
+});
+
+
+
+export const createJobSchema = Joi.object({
+  title: Joi.string().required(),
+  description: Joi.string().required(),
+  industry: Joi.string().required(),
+  salary: Joi.number().required(),
+  required_skills: Joi.array().items(Joi.string()).required(),
+  city: Joi.string().required(),
+});
+
+
+export const updateJobSchema = Joi.object({
+  title: Joi.string().trim().required(),
+  description: Joi.string().trim().required(),
+  salary: Joi.number().positive().required(),
+  required_skills: Joi.array().items(Joi.string().trim()).required(),
+  city: Joi.string().trim().required(),
 });
 
 
