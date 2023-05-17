@@ -11,7 +11,7 @@ import { getCurrentUser, requireAccountType } from "./middleware/auth.js"
 
 const app = express();
 
-app.use(helmet)
+app.use(helmet())
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
