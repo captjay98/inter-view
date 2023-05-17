@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
 import User from "./users.js";
-import Skill from "./core.js"
+import { Skill } from "./core.js"
 
 const { Schema } = mongoose;
 
 const SeekerSchema = new Schema({
-  user: { type: Schema.Types.ObjectId, ref: 'User', required: true } ,
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   phone: {
     countryCode: { type: String, default: null },
     number: { type: String, default: null }
@@ -15,7 +15,7 @@ const SeekerSchema = new Schema({
   country: { type: String, default: null },
   dateOfBirth: { type: Date, default: null },
   ethnicity: { type: String, default: null },
-  skills: [{ type: Schema.Types.ObjectId, ref: 'Skill', default: null }], 
+  skills: [{ type: Schema.Types.ObjectId, ref: 'Skill', default: null }],
   qualifications: [
     {
       title: { type: String, default: null },
@@ -39,7 +39,7 @@ const SeekerSchema = new Schema({
     type: {
       type: String,
       enum: ['Point'],
-      default: "Point" 
+      default: "Point"
     },
     coordinates: {
       type: [Number],
@@ -49,6 +49,6 @@ const SeekerSchema = new Schema({
 });
 
 
-SeekerSchema.index({ location: '2dsphere' }); 
+SeekerSchema.index({ location: '2dsphere' });
 export default mongoose.model('Seeker', SeekerSchema);
 
