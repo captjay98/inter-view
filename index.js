@@ -1,4 +1,5 @@
 import express from "express";
+import helmet from "helmet";
 import morgan from "morgan";
 import { dbConnect } from "./middleware/db.js"
 import uRouter from "./routes/userRoutes.js"
@@ -10,7 +11,7 @@ import { getCurrentUser, requireAccountType } from "./middleware/auth.js"
 
 const app = express();
 
-
+app.use(helmet)
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
