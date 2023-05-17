@@ -6,7 +6,12 @@ const skillSchema = new Schema({
 });
 
 
-const FAQSchema = new Schema({
+const industrySchema = new Schema({
+  name: { type: String, required: true }
+})
+
+
+const FaqSchema = new Schema({
   question: {
     type: String,
     required: true
@@ -38,7 +43,7 @@ const ArticleSchema = new Schema({
 });
 
 
-const InterviewTipSchema = new Schema({
+const InterviewHelpSchema = new Schema({
   title: {
     type: String,
     required: true
@@ -56,4 +61,10 @@ const InterviewTipSchema = new Schema({
 
 
 
-export default mongoose.model('Skill', skillSchema);
+export const Skill = mongoose.model('Skill', skillSchema);
+export const Industry = mongoose.model('Industry', industrySchema)
+export const Faq = mongoose.model('Faq', FaqSchema);
+export const Article = mongoose.model('Article', ArticleSchema);
+export const InterviewHelp = mongoose.model('InterviewHelp', InterviewHelpSchema);
+
+
