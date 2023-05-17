@@ -1,11 +1,8 @@
-import { geocoder } from "../middleware/geocoder.js";
-import { upload } from "../middleware/multer.js";
+import { geocodeLocation } from "../middleware/geocoder.js";
 import { userSeekerSchema, filterFields } from "../middleware/validators.js"
 import User from "../models/users.js"
 import Seeker from "../models/seekers.js";
-import models from "../models/employers.js";
-const { Job, JobApplication } = models;
-
+import { Job, JobApplication } from "../models/employers.js";
 
 
 const getUserAndSeeker = async (req) => {
@@ -71,6 +68,7 @@ export const updateDashboard = async (req, res) => {
       dateOfBirth, ethnicity, skills,
       qualifications, experience
     });
+    console.log(req.files)
 
     if (req.files) {
       if (req.files.cv) {
@@ -85,15 +83,11 @@ export const updateDashboard = async (req, res) => {
     }
 
     if (city) {
-      const result = await geocoder.geocode(city);
-
-      if (!result || !result[0]) {
-        return res.status(400).json({ message: "Invalid city" });
-      }
+      const locationCoordinates = await geocodeLocation(city);
 
       const location = {
         type: "Point",
-        coordinates: [result[0].longitude, result[0].latitude]
+        coordinates: locationCoordinates,
       };
 
       seekerUpdateFields.city = city;
@@ -140,9 +134,66 @@ export const getJob = async (req, res) => {
 };
 
 
+
+export const filterJobs = async (req, res) => {
+  try {
+    const { industry, location } = req.query;
+    const filters = {};
+
+    if (industry) {
+      filters.industry = industry;
+    }
+
+    if (location) {
+      filters.location = location;
+    }
+
+    const jobs = await Job.find(filters);
+
+    return res.status(200).json({ jobs });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+export const filterJobsNearby = async (req, res) => {
+  try {
+    const { latitude, longitude, distance } = req.query;
+
+    const coordinates = [parseFloat(longitude), parseFloat(latitude)];
+
+    const maxDistance = distance ? parseFloat(distance) * 1000 : undefined;
+
+    const jobs = await Job.find({
+      location: {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates,
+          },
+          $maxDistance: maxDistance,
+        },
+      },
+    }).populate({
+      path: 'employer',
+      populate: {
+        path: 'user',
+        select: 'firstname lastname email',
+      },
+    });
+
+    return res.status(200).json({ jobs });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
 export const getApplications = async (req, res) => {
   try {
-    const user = req.user; // get the current user
+    const user = getUserAndSeeker(req)
     const applications = await JobApplication.find({ seeker: user }).populate('job', 'title employer location description salary required_skills city')
     return res.status(200).json({ applications });
   } catch (error) {
