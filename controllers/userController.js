@@ -6,8 +6,8 @@ import { registerSchema, loginSchema } from "../middleware/validators.js"
 import User from '../models/users.js';
 import Admin from '../models/admin.js';
 import Seeker from '../models/seekers.js';
-import models from "../models/employers.js";
-const { Employer } = models;
+import { Employer } from "../models/employers.js";
+// const { Employer } = models;
 
 
 const secret = "HelloWorld55";
@@ -95,6 +95,7 @@ export const userLogin = async (req, res) => {
     const token = jwt.sign({ userId: user._id }, secret);
     return res.status(200).json({ user, token });
 
+    // check if user is active
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Server error' });
