@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import { dbConnect } from "./middleware/db.js"
 import uRouter from "./routes/userRoutes.js"
+import cRouter from "./routes/coreRoutes.js"
 import aRouter from "./routes/adminRoutes.js"
 import eRouter from "./routes/employerRoutes.js"
 import sRouter from "./routes/seekerRoutes.js"
@@ -21,7 +22,8 @@ dbConnect()
 
 
 app.use("/api/users", uRouter)
+app.use("/api/core", cRouter)
 app.use("/api/admin", getCurrentUser, requireAccountType("admin"), aRouter)
 app.use("/api/employers", getCurrentUser, requireAccountType("employer"), eRouter)
 app.use("/api/seekers", getCurrentUser, requireAccountType("seeker"), sRouter)
-// app.use("/api/core", )
+
