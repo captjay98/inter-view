@@ -8,7 +8,7 @@ import Admin from "../models/admin.js";
 import Seeker from "../models/seekers.js";
 import { Employer } from "../models/employers.js";
 
-const secret = "HelloWorld55";
+const secret = process.env.SECRET;
 
 export const userRegister = async (req, res) => {
   try {
