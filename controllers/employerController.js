@@ -1,50 +1,52 @@
-import { geocodeLocation } from "../middleware/geocoder.js"
-import { userEmployerSchema, createJobSchema, updateJobSchema, filterFields } from "../middleware/validators.js"
+import { geocodeLocation } from "../middleware/geocoder.js";
+import {
+  userEmployerSchema,
+  createJobSchema,
+  updateJobSchema,
+  filterFields,
+} from "../middleware/validators.js";
 import { Employer, Job, JobApplication } from "../models/employers.js";
-import User from "../models/users.js"
-
+import User from "../models/users.js";
 
 const getUserAndEmployer = async (req) => {
   const user = req.user;
   if (!user) {
     throw new Error("User not found");
   }
-  const employer = await Employer.findOne({ user: user });
+  const employer = await Employer.findOne({ user: user }).populate(
+    "user",
+    "firstname lastname username email account_type isActive",
+  );
+
   if (!employer) {
     throw new Error("Employer not found");
   }
   return { user, employer };
 };
 
-
 export const getDashboard = async (req, res) => {
   try {
     const { employer } = await getUserAndEmployer(req);
-    const user = await User.findById(employer.user);
-    return res.status(200).json({ employer, user });
+    // const user = await User.findById(employer.user);
+    return res.status(200).json({ employer });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-
 export const updateDashboard = async (req, res) => {
   try {
     const { employer } = await getUserAndEmployer(req);
 
-    const validation = userEmployerSchema.validate(req.body);
-    if (validation.error) {
-      return res.status(400).json({ message: validation.error.details[0].message });
+    const { error, value } = userEmployerSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
     }
 
-    const updateFields = filterFields(validation.value);
+    const updateFields = filterFields(value);
 
-    const updatedUser = await User.findByIdAndUpdate(
-      employer.user,
-      updateFields,
-      { new: true }
-    );
+    const updatedUser = await User.findByIdAndUpdate(employer.user, updateFields, { new: true });
 
     return res.status(200).json({ user: updatedUser });
   } catch (error) {
@@ -52,10 +54,6 @@ export const updateDashboard = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
-
-
 
 export const createJob = async (req, res) => {
   try {
@@ -66,7 +64,6 @@ export const createJob = async (req, res) => {
     }
 
     const filteredFields = filterFields(value);
-    // const { title, description, industry, salary, required_skills, city } = filteredFields;
 
     const locationCoordinates = await geocodeLocation(city);
 
@@ -75,7 +72,7 @@ export const createJob = async (req, res) => {
       ...filteredFields,
       city: filteredFields.city,
       location: {
-        type: 'Point',
+        type: "Point",
         coordinates: locationCoordinates,
       },
     });
@@ -87,10 +84,6 @@ export const createJob = async (req, res) => {
   }
 };
 
-
-
-
-
 export const getJobs = async (req, res) => {
   try {
     const { employer } = await getUserAndEmployer(req);
@@ -98,27 +91,25 @@ export const getJobs = async (req, res) => {
     return res.status(200).json({ jobs });
   } catch (error) {
     console.log(error);
-    if (error.name === 'CastError') {
-      return res.status(400).json({ message: 'Invalid employer ID' });
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid employer ID" });
     }
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-
 export const getJob = async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id).populate('required_skills', 'name');
+    const job = await Job.findById(req.params.id).populate("required_skills", "name");
     if (!job) {
-      return res.status(404).json({ message: 'Job not found' });
+      return res.status(404).json({ message: "Job not found" });
     }
     return res.status(200).json({ job });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 export const updateJob = async (req, res) => {
   try {
@@ -127,78 +118,76 @@ export const updateJob = async (req, res) => {
     const job = await Job.findById(req.params.id);
 
     if (!job) {
-      return res.status(404).json({ message: 'Job not found' });
+      return res.status(404).json({ message: "Job not found" });
     }
 
     if (job.employer.toString() !== employer._id.toString()) {
-      return res.status(401).json({ message: 'You are not authorized to update this job' });
+      return res.status(401).json({ message: "You are not authorized to update this job" });
     }
 
-    const { error: validationError, value: validatedFields } = updateJobSchema.validate(req.body);
-    if (validationError) {
+    const { error, value } = updateJobSchema.validate(req.body);
+    if (error) {
       return res.status(400).json({ message: validationError.details[0].message });
     }
 
-    const filteredFields = filterFields(validatedFields);
+    const filteredFields = filterFields(value);
 
-    await Job.findByIdAndUpdate(
-      req.params.id,
-      filteredFields,
-      { new: true }
-    );
+    await Job.findByIdAndUpdate(req.params.id, filteredFields, { new: true });
 
     return res.status(200).json({ job });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
-
-
 
 export const getApplications = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
     if (!job) {
-      return res.status(404).json({ message: 'Job not found' });
+      return res.status(404).json({ message: "Job not found" });
     }
 
-    const applications = await JobApplication.find({ job: job._id }).populate('seeker', '-password');
+    const applications = await JobApplication.find({ job: job._id }).populate(
+      "seeker",
+      "-password",
+    );
     return res.status(200).json({ applications });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-
 export const getApplication = async (req, res) => {
   try {
-    const jobApplication = await JobApplication.findById(req.params.id).populate('job', 'title').populate('seeker', '-password');
+    const jobApplication = await JobApplication.findById(req.params.id)
+      .populate("job", "title")
+      .populate("seeker", "-password");
     if (!jobApplication) {
-      return res.status(404).json({ message: 'Job application not found' });
+      return res.status(404).json({ message: "Job application not found" });
     }
     return res.status(200).json({ jobApplication });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 export const updateApplication = async (req, res) => {
   try {
     const { status } = req.body;
-    const jobApplication = await JobApplication.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    const jobApplication = await JobApplication.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true },
+    );
     if (!jobApplication) {
-      return res.status(404).json({ message: 'Job application not found' });
+      return res.status(404).json({ message: "Job application not found" });
     }
     return res.status(200).json({ jobApplication });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
-
